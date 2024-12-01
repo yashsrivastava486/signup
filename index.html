@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login and Signup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .form-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 400px;
+    }
+    .form-container h2 {
+      margin-bottom: 20px;
+      color: #333;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .form-group button {
+      width: 100%;
+      padding: 10px;
+      background: #007bff;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .form-group button:hover {
+      background: #0056b3;
+    }
+    .data-display {
+      margin-top: 20px;
+      font-size: 16px;
+    }
+    .hidden {
+      display: none;
+    }
+    .switch-link {
+      display: block;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .switch-link a {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .switch-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container" id="loginPage">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" placeholder="Enter your email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Enter your password" required>
+      </div>
+      <div class="form-group">
+        <button type="submit">Login</button>
+      </div>
+    </form>
+    <div class="switch-link">
+      <a href="#" id="goToSignup">Create Account</a>
+    </div>
+    <div class="data-display" id="loginError"></div>
+  </div>
+
+  <div class="form-container hidden" id="signupPage">
+    <h2>Signup</h2>
+    <form id="signupForm">
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" placeholder="Enter your name" required>
+      </div>
+      <div class="form-group">
+        <label for="signupEmail">Email:</label>
+        <input type="email" id="signupEmail" placeholder="Enter your email" required>
+      </div>
+      <div class="form-group">
+        <label for="dob">Date of Birth:</label>
+        <input type="date" id="dob" required>
+      </div>
+      <div class="form-group">
+        <label for="course">Course:</label>
+        <select id="course" required>
+          <option value="Math">Math</option>
+          <option value="Science">Science</option>
+          <option value="History">History</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="profilePhoto">Profile Photo:</label>
+        <input type="file" id="profilePhoto" accept="image/*" required>
+      </div>
+      <div class="form-group">
+        <label for="signupPassword">Password:</label>
+        <input type="password" id="signupPassword" placeholder="Set a password" required>
+      </div>
+      <div class="form-group">
+        <button type="submit">Register</button>
+      </div>
+    </form>
+    <div class="data-display" id="signupError"></div>
+  </div>
+
+  <div id="userData" class="hidden"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAhZZeYth58XzPGxNSvS85DIYOfUtoPTR0",
+      authDomain: "webchar-1b6ee.firebaseapp.com",
+      databaseURL: "https://webchar-1b6ee-default-rtdb.firebaseio.com",
+      projectId: "webchar-1b6ee",
+      storageBucket: "webchar-1b6ee.firebasestorage.app",
+      messagingSenderId: "1033805491825",
+      appId: "1:1033805491825:web:ba70657883d0598fbd35d0",
+      measurementId: "G-H0FXKVZJGD"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const loginPage = document.getElementById("loginPage");
+    const signupPage = document.getElementById("signupPage");
+    const loginForm = document.getElementById("loginForm");
+    const signupForm = document.getElementById("signupForm");
+    const loginError = document.getElementById("loginError");
+    const signupError = document.getElementById("signupError");
+    const userData = document.getElementById("userData");
+    const goToSignup = document.getElementById("goToSignup");
+
+    // Go to Signup page
+    goToSignup.addEventListener("click", (e) => {
+      e.preventDefault();
+      loginPage.classList.add("hidden");
+      signupPage.classList.remove("hidden");
+    });
+
+    // Login Form
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const dbRef = ref(database);
+      get(child(dbRef, "users"))
+        .then((snapshot) => {
+          if (snapshot.exists()) {
+            const users = snapshot.val();
+            let userFound = false;
+            let userHtml = "";
+
+            // Check credentials and fetch data for only the matched user
+            Object.keys(users).forEach((key) => {
+              if (users[key].email === email && users[key].password === password) {
+                userFound = true;
+                userHtml = `<h1>Welcome, ${users[key].name}</h1>
+                  <p><strong>Email:</strong> ${users[key].email}</p>
+                  <p><strong>Date of Birth:</strong> ${users[key].dob}</p>
+                  <p><strong>Course:</strong> ${users[key].course}</p>
+                  <img src="${users[key].profilePhoto}" alt="Profile Photo" style="width:150px; border-radius:50%; margin-bottom: 20px;">`;
+              }
+            });
+
+            if (!userFound) {
+              loginError.innerText = "Invalid email or password.";
+            } else {
+              loginPage.classList.add("hidden");
+              userData.classList.remove("hidden");
+              userData.innerHTML = userHtml;
+            }
+          } else {
+            loginError.innerText = "No users found in the database.";
+          }
+        })
+        .catch((error) => {
+          loginError.innerText = "Error fetching data: " + error.message;
+        });
+    });
+
+    // Signup Form
+    signupForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("signupEmail").value;
+      const dob = document.getElementById("dob").value;
+      const course = document.getElementById("course").value;
+      const profilePhoto = document.getElementById("profilePhoto").files[0];
+      const password = document.getElementById("signupPassword").value;
+      const uniqueId = "USER_" + Date.now();
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dbRef = ref(database, "users/" + uniqueId);
+        set(dbRef, {
+          name,
+          email,
+          dob,
+          course,
+          profilePhoto: reader.result,
+          password,
+        })
+          .then(() => {
+            alert("User registered successfully!");
+            signupForm.reset();
+            signupPage.classList.add("hidden");
+            loginPage.classList.remove("hidden");
+          })
+          .catch((error) => {
+            signupError.innerText = "Error registering user: " + error.message;
+          });
+      };
+      reader.readAsDataURL(profilePhoto);
+    });
+  </script>
+</body>
+</html>

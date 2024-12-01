@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Creation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+    .form-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 400px;
+    }
+    .form-container h2 {
+      text-align: center;
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .form-group button {
+      width: 100%;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .form-group button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container" id="accountForm">
+    <h2>Create Account</h2>
+    <form id="createAccountForm">
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" placeholder="Enter your name" required>
+      </div>
+      <div class="form-group">
+        <label for="dob">Date of Birth:</label>
+        <input type="date" id="dob" required>
+      </div>
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" placeholder="Enter your email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Set a password" required>
+      </div>
+      <div class="form-group">
+        <label for="course">Course:</label>
+        <select id="course" required>
+          <option value="Math">Math</option>
+          <option value="Science">Science</option>
+          <option value="History">History</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="profilePhoto">Profile Photo:</label>
+        <input type="file" id="profilePhoto" accept="image/*" required>
+      </div>
+      <div class="form-group">
+        <button type="submit">Create Account</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAhZZeYth58XzPGxNSvS85DIYOfUtoPTR0",
+      authDomain: "webchar-1b6ee.firebaseapp.com",
+      databaseURL: "https://webchar-1b6ee-default-rtdb.firebaseio.com",
+      projectId: "webchar-1b6ee",
+      storageBucket: "webchar-1b6ee.appspot.com",
+      messagingSenderId: "1033805491825",
+      appId: "1:1033805491825:web:ba70657883d0598fbd35d0",
+      measurementId: "G-H0FXKVZJGD"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const createAccountForm = document.getElementById("createAccountForm");
+
+    createAccountForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const dob = document.getElementById("dob").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const course = document.getElementById("course").value;
+      const profilePhoto = document.getElementById("profilePhoto").files[0];
+      const uniqueId = "USER_" + Date.now();
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dbRef = ref(database, "users/" + uniqueId);
+        set(dbRef, {
+          name,
+          dob,
+          email,
+          password,
+          course,
+          profilePhoto: reader.result,
+        }).then(() => {
+          alert("Account created successfully!");
+          createAccountForm.reset();
+        }).catch((error) => {
+          alert("Error creating account: " + error.message);
+        });
+      };
+      reader.readAsDataURL(profilePhoto);
+    });
+  </script>
+</body>
+</html>
